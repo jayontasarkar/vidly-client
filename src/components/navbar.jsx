@@ -1,8 +1,26 @@
-import React, { Component } from "react";
-import { NavLink } from "react-router-dom";
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import React, { Component } from 'react';
+import { NavLink } from 'react-router-dom';
+import auth from '../services/authService';
 
 class Navbar extends Component {
+  state = {
+    toggleDropdown: false,
+  };
+
+  handleToggle = (e) => {
+    e.preventDefault();
+    this.setState({ toggleDropdown: !this.state.toggleDropdown });
+  };
+
+  handleLogout = (e) => {
+    e.preventDefault();
+    auth.logout();
+    window.location = '/';
+  };
+
   render() {
+    const { user } = this.props;
     return (
       <nav className="navbar navbar-expand-sm navbar-light fixed-top bg-light">
         <div className="container">
@@ -45,24 +63,63 @@ class Navbar extends Component {
                 Rentals
               </NavLink>
             </ul>
-            <ul className="navbar-nav">
-              <NavLink
-                className="nav-item nav-link"
-                activeClassName="active"
-                to="/login"
-                exact
-              >
-                Login
-              </NavLink>
-              <NavLink
-                className="nav-item nav-link"
-                activeClassName="active"
-                to="/register"
-                exact
-              >
-                Register
-              </NavLink>
-            </ul>
+            {!user && (
+              <ul className="navbar-nav">
+                <NavLink
+                  className="nav-item nav-link"
+                  activeClassName="active"
+                  to="/login"
+                  exact
+                >
+                  Login
+                </NavLink>
+                <NavLink
+                  className="nav-item nav-link"
+                  activeClassName="active"
+                  to="/register"
+                  exact
+                >
+                  Register
+                </NavLink>
+              </ul>
+            )}
+            {user && (
+              <ul className="navbar-nav">
+                <li className="nav-item dropdown">
+                  <a
+                    href="#"
+                    className="nav-link dropdown-toggle"
+                    role="button"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    onClick={this.handleToggle}
+                  >
+                    {user.name}
+                  </a>
+                  <div
+                    className={
+                      this.state.toggleDropdown
+                        ? 'dropdown-menu navbar-dropdown show'
+                        : 'dropdown-menu navbar-dropdown'
+                    }
+                    aria-labelledby="navbarDropdown"
+                  >
+                    <a className="dropdown-item" href="#">
+                      Profile
+                    </a>
+                    <div className="dropdown-divider"></div>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={this.handleLogout}
+                    >
+                      Logout
+                    </a>
+                  </div>
+                </li>
+              </ul>
+            )}
           </div>
         </div>
       </nav>

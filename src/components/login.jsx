@@ -1,24 +1,36 @@
-import React from "react";
-import Joi from "joi-browser";
-import Form from "./common/form";
+import React from 'react';
+import Joi from 'joi-browser';
+import Form from './common/form';
+import auth from '../services/authService';
+import { Redirect } from 'react-router-dom';
 
 class Login extends Form {
   state = {
-    data: { username: "", password: "" },
+    data: { email: '', password: '' },
     errors: {},
   };
 
   schema = {
-    username: Joi.string().required().label("Username"),
-    password: Joi.string().required().label("Password"),
+    email: Joi.string().required().email().label('Email address'),
+    password: Joi.string().required().label('Password'),
   };
 
-  doSubmit = () => {
-    // Call the server
-    console.log("Submitted");
+  doSubmit = async () => {
+    try {
+      await auth.login(this.state.data);
+      const { state } = this.props.location;
+      window.location = state ? state.from.pathname : '/';
+    } catch (err) {
+      if (err.response && err.response.status === 400) {
+        const errors = { ...this.state.errors };
+        errors.email = err.response.data;
+        this.setState({ errors });
+      }
+    }
   };
 
   render() {
+    if (auth.getCurrentUser()) return <Redirect to="/" />;
     return (
       <div className="row justify-content-md-center">
         <div className="col-md-7">
@@ -26,12 +38,12 @@ class Login extends Form {
           <hr />
           <form onSubmit={this.handleSubmit}>
             <div className="form-group">
-              {this.renderInput("username", "Username")}
+              {this.renderInput('email', 'Email Address')}
             </div>
             <div className="form-group">
-              {this.renderInput("password", "Password", "password")}
+              {this.renderInput('password', 'Password', 'password')}
             </div>
-            <div className="form-group">{this.renderButton("Login")}</div>
+            <div className="form-group">{this.renderButton('Login')}</div>
           </form>
         </div>
       </div>

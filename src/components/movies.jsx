@@ -1,13 +1,14 @@
-import React, { Component } from "react";
-import Pagination from "./common/pagination";
-import ListGroup from "./common/listGroup";
-import { getMovies } from "../services/fakeMovieService";
-import { getGenres } from "../services/fakeGenreService";
-import { paginate } from "./../utils/paginate";
-import { sort } from "./../utils/sort";
-import MoviesTable from "./moviesTable";
-import SearchBox from "./common/searchBox";
-import { Link } from "react-router-dom";
+import React, { Component } from 'react';
+import { toast } from 'react-toastify';
+import Pagination from './common/pagination';
+import ListGroup from './common/listGroup';
+import { getMovies, deleteMovie } from '../services/movieService';
+import { getGenres } from '../services/genreService';
+import { paginate } from './../utils/paginate';
+import { sort } from './../utils/sort';
+import MoviesTable from './moviesTable';
+import SearchBox from './common/searchBox';
+import { Link } from 'react-router-dom';
 
 class Movies extends Component {
   state = {
@@ -16,19 +17,27 @@ class Movies extends Component {
     pageSize: 5,
     currentPage: 1,
     selectedGenre: null,
-    searchQuery: "",
-    sortColumn: { path: "title", order: "asc" },
+    searchQuery: '',
+    sortColumn: { path: 'title', order: 'asc' },
   };
 
-  componentDidMount() {
-    const movies = getMovies();
-    const genres = [{ name: "All Genre" }, ...getGenres()];
+  async componentDidMount() {
+    const { data: movies } = await getMovies();
+    const { data: genresFromDb } = await getGenres();
+    const genres = [{ name: 'All Genre' }, ...genresFromDb];
     this.setState({ movies, genres });
   }
 
-  handleDelete = (movieId) => {
-    const movies = this.state.movies.filter((movie) => movie._id !== movieId);
-    this.setState({ movies });
+  handleDelete = async (movieId) => {
+    try {
+      await deleteMovie(movieId);
+      const movies = this.state.movies.filter((movie) => movie._id !== movieId);
+      this.setState({ movies });
+      toast.success('Movie deleted successfully');
+    } catch (error) {
+      if (error.response && error.response.status === 404)
+        toast.error('Movie with the ID was not found.');
+    }
   };
 
   handleLike = (movie) => {
@@ -106,11 +115,13 @@ class Movies extends Component {
           />
         </div>
         <div className="col">
-          <div className="mb-3">
-            <Link to={`/movies/new`} className="btn btn-primary">
-              New Movie
-            </Link>
-          </div>
+          {this.props.user && (
+            <div className="mb-3">
+              <Link to={`/movies/new`} className="btn btn-primary">
+                New Movie
+              </Link>
+            </div>
+          )}
 
           <p>Showing {totalCount} movies in the database.</p>
 
